@@ -556,14 +556,17 @@ public:
 
     template <class U> constexpr T value_or(U&& v) const&
     {
-        // mandates: is_copy_constructible_v<T> is true and is_convertible<U, T>
-        // is true.
+        static_assert(std::conjunction_v<std::is_copy_constructible<T>,
+            std::is_convertible<U, T>>);
 
         return has_val_ ? **this : static_cast<T>(std::forward<U>(v));
     }
 
     template <class U> constexpr T value_or(U&& v) &&
     {
+        static_assert(std::conjunction_v<std::is_move_constructible<T>,
+            std::is_convertible<U, T>>);
+
         return has_val_ ? std::move(**this)
                         : static_cast<T>(std::forward<U>(v));
     }
