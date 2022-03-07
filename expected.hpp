@@ -781,10 +781,87 @@ public:
 
     // TODO assignment operators
 
-    constexpr expected& operator=(const expected&);
-    constexpr expected& operator=(expected&&) noexcept(true);
-    template <class G> constexpr expected& operator=(const unexpected<G>&);
-    template <class G> constexpr expected& operator=(unexpected<G>&&);
+    constexpr expected& operator=(const expected& rhs)
+    {
+        if (has_val_ && rhs.has_val_) {
+            // No effect
+        }
+        else if (has_val_) {
+            std::construct_at(std::addressof(unex_), rhs.unex_);
+            has_val_ = false;
+        }
+        else if (rhs.has_val_) {
+            std::destroy_at(std::addressof(unex_));
+            has_val_ = false;
+        }
+        else {
+            unex_ = rhs.unex_;
+        }
+
+        return *this;
+    }
+
+    constexpr expected& operator=(const expected&) requires(
+        !std::conjunction_v<std::is_copy_assignable<E>,
+            std::is_copy_constructible<E>>) = delete;
+
+    constexpr expected& operator=(expected&& rhs) noexcept(
+        std::conjunction_v<std::is_nothrow_move_constructible<E>,
+            std::is_nothrow_move_assignable<E>>)
+    {
+        if (has_val_ && rhs.has_val_) {
+            // No effect
+        }
+        else if (has_val_) {
+            std::construct_at(std::addressof(unex_), std::move(rhs.unex_));
+            has_val_ = false;
+        }
+        else if (rhs.has_val_) {
+            std::destroy_at(std::addressof(unex_));
+            has_val_ = false;
+        }
+        else {
+            unex_ = std::move(rhs.unex_);
+        }
+
+        return *this;
+    }
+
+    constexpr expected& operator=(expected&&) requires(
+        !std::conjunction_v<std::is_move_assignable<E>,
+            std::is_move_constructible<E>>) = delete;
+
+    template <class G, class GF = const G&>
+    requires(std::conjunction_v < std::is_constructible<E, GF>,
+        std::is_assignable<E&, GF>) constexpr expected&
+    operator=(const unexpected<G>& e)
+    {
+        if (has_val_) {
+            std::construct_at(
+                std::addressof(unex_), std::forward<GF>(e.value()));
+            has_val_ = false;
+        }
+        else {
+            unex_ = std::forward<GF>(e.value());
+        }
+        return *this;
+    }
+
+    template <class G, class GF = G>
+    requires(std::conjunction_v < std::is_constructible<E, GF>,
+        std::is_assignable<E&, GF>) constexpr expected&
+    operator=(unexpected<G>&& e)
+    {
+        if (has_val_) {
+            std::construct_at(
+                std::addressof(unex_), std::forward<GF>(e.value()));
+            has_val_ = false;
+        }
+        else {
+            unex_ = std::forward<GF>(e.value());
+        }
+        return *this;
+    }
 
     constexpr void emplace() noexcept
     {
