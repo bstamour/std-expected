@@ -871,11 +871,35 @@ public:
         }
     }
 
-    // TODO swap
+    constexpr void swap(expected& rhs) //
+        requires(std::conjunction_v<std::is_swappable<E>,
+            std::is_move_constructible<E>>) //
+        noexcept(std::conjunction_v < std::is_nothrow_move_constructible<E>,
+            std::is_nothrow_swappable<E>)
+    {
+        if (has_val_ && rhs.has_val_) {
+            // No effect.
+        }
+        else if (has_val_ && !rhs.has_val_) {
+            std::construct_at(std::addressof(unex_), std::move(rhs.unex_));
+            std::destroy_at(std::addressof(rhs.unex_));
+            has_val_ = false;
+            rhs.has_val_ = true;
+        }
+        else if (!has_val_ && rhs.has_val_) {
+            rhs.swap(*this);
+        }
+        else {
+            using std::swap;
+            swap(unex_, rhs.unex_);
+        }
+    }
 
-    constexpr void swap(expected&) noexcept(true);
-
-    friend constexpr void swap(expected&, expected&) noexcept(true);
+    friend constexpr void swap(expected& x, expected& y) noexcept(
+        noexcept(x.swap(y)))
+    {
+        x.swap(y);
+    }
 
     constexpr explicit operator bool() const noexcept { return has_val_; }
     constexpr bool has_value() const noexcept { return has_val_; }
