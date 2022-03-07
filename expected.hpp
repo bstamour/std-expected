@@ -668,44 +668,158 @@ public:
 
     template <class U> using rebind = expected<U, error_type>;
 
-    constexpr expected() noexcept;
-    constexpr explicit(true) expected(const expected&);
-    constexpr explicit(true) expected(expected&&) noexcept(true);
-    template <class U, class G>
-    constexpr explicit(true) expected(const expected<U, G>&);
-    template <class U, class G>
-    constexpr explicit(true) expected(expected<U, G>&&);
+    constexpr expected() noexcept
+        : has_val_(true)
+    {
+    }
 
-    template <class G> constexpr expected(const unexpected<G>&);
-    template <class G> constexpr expected(unexpected<G>&&);
+    constexpr expected(const expected& rhs)
+        : has_val_(rhs.has_val_)
+    {
+        if (!has_val_)
+            std::construct_at(std::addressof(unex_), rhs.error());
+    }
 
-    constexpr explicit expected(std::in_place_t) noexcept;
-    template <class... Args> constexpr explicit expected(unexpect_t, Args&&...);
+    constexpr expected(const expected&) requires(
+        !std::is_copy_constructible_v<E>) = delete;
+
+    constexpr expected(const expected&) requires(
+        std::is_trivially_copy_constructible_v<E>) = default;
+
+    constexpr expected(expected&& rhs)            //
+        requires(std::is_move_constructible_v<E>) //
+        noexcept(std::is_nothrow_move_constructible_v<E>)
+        : has_val_(rhs.has_val_)
+    {
+        if (!has_val_)
+            std::construct_at(std::addressof(unex_), std::move(rhs.error()));
+    }
+
+    constexpr expected(expected&& rhs) requires(
+        std::is_trivially_move_constructible_v<E>) = default;
+
+    template <class U, class G, class GF = const G&>
+    requires(std::conjunction_v<std::is_void<U>, std::is_constructible<E, GF>,
+        std::negation<std::is_constructible<unexpected<E>, expected<U, G>&>>,
+        std::negation<std::is_constructible<unexpected<E>, expected<U, G>>>,
+        std::negation<
+            std::is_constructible<unexpected<E>, const expected<U, G>&>>,
+        std::negation<
+            std::is_constructible<unexpected<E>, const expected<U, G>>>>) //
+        constexpr explicit(!std::is_convertible_v<GF, E>)
+            expected(const expected<U, G>& rhs)
+        : has_val_(rhs.has_val_)
+    {
+        if (!has_val_)
+            std::construct_at(
+                std::addressof(unex_), std::forward<GF>(rhs.error()));
+    }
+
+    template <class U, class G class GF = G>
+    requires(std::conjunction_v<std::is_void<U>, std::is_constructible<E, GF>,
+        std::negation<std::is_constructible<unexpected<E>, expected<U, G>&>>,
+        std::negation<std::is_constructible<unexpected<E>, expected<U, G>>>,
+        std::negation<
+            std::is_constructible<unexpected<E>, const expected<U, G>&>>,
+        std::negation<
+            std::is_constructible<unexpected<E>, const expected<U, G>>>>) //
+        constexpr explicit(!std::is_convertible_v<GF, E>)
+            expected(expected<U, G>&&)
+        : has_val_(rhs.has_val_)
+    {
+        if (!has_val_)
+            std::construct_at(
+                std::addressof(unex_), std::forward<GF>(rhs.error()));
+    }
+
+    template <class G, class GF = const G&>
+    requires(std::is_constructible_v<E, GF>) constexpr explicit(
+        std::is_convertible_v<GF, E>) expected(const unexpected<G>& e)
+        : has_val_(false)
+    {
+        std::construct_at(std::addressof(unex_), std::forward<GF>(e.value()));
+    }
+
+    template <class G, class GF = G>
+    requires(std::is_constructible_v<E, GF>) constexpr explicit(
+        std::is_convertible_v<GF, E>) expected(unexpected<G>&& e)
+        : has_val_(false)
+    {
+        std::construct_at(std::addressof(unex_), std::forward<GF>(e.value()));
+    }
+
+    constexpr explicit expected(std::in_place_t) noexcept
+        : has_val_(true)
+    {
+    }
+
+    template <class... Args>
+    requires(std::is_constructible_v<E, Args...>) constexpr explicit expected(
+        unexpect_t, Args&&... args)
+        : has_val_(false)
+        , unex_(std::forward<Args>(args)...)
+    {
+    }
+
     template <class U, class... Args>
-    constexpr explicit expected(
-        unexpect_t, std::initializer_list<U>, Args&&...);
+    requires(std::is_constructible_v<E, std::initializer_list<U>&,
+        Args...>) constexpr explicit expected(unexpect_t,
+        std::initializer_list<U> il, Args&&... args)
+        : has_val_(false)
+        , unex_(il, std::forward<Args>(args)...)
+    {
+    }
 
-    constexpr ~expected();
+    constexpr ~expected()
+    {
+        if (!has_val_)
+            std::destroy_at(std::addressof(unex_));
+    }
+
+    constexpr ~expected() requires(
+        std::is_trivially_destructible_v<E>) = default;
+
+    // TODO assignment operators
 
     constexpr expected& operator=(const expected&);
     constexpr expected& operator=(expected&&) noexcept(true);
     template <class G> constexpr expected& operator=(const unexpected<G>&);
     template <class G> constexpr expected& operator=(unexpected<G>&&);
 
-    constexpr void emplace() noexcept;
+    constexpr void emplace() noexcept
+    {
+        if (!has_val_) {
+            std::destroy_at(std::addressof(unex_));
+            has_val_ = true;
+        }
+    }
+
+    // TODO swap
 
     constexpr void swap(expected&) noexcept(true);
 
-    constexpr explicit operator bool() const noexcept;
-    constexpr bool has_value() const noexcept;
-    constexpr void operator*() const noexcept;
-    constexpr void value() const&;
-    constexpr void value() const&&;
+    friend constexpr void swap(expected&, expected&) noexcept(true);
 
-    constexpr const E& error() const&;
-    constexpr E& error() &;
-    constexpr const E&& error() const&&;
-    constexpr E&& error() &&;
+    constexpr explicit operator bool() const noexcept { return has_val_; }
+    constexpr bool has_value() const noexcept { return has_val_; }
+    constexpr void operator*() const noexcept { return; }
+    constexpr void value() const&
+    {
+        if (!has_val_)
+            throw bad_expected_access(error());
+    }
+    constexpr void value() const&&
+    {
+        if (!has_val_)
+            throw bad_expected_access(error());
+    }
+
+    constexpr const E& error() const& { return unex_; }
+    constexpr E& error() & { return unex_; }
+    constexpr const E&& error() const&& { return std::move(unex_); }
+    constexpr E&& error() && { return std::move(unex_); }
+
+    // TODO comparison ops
 
     template <class T2, class E2>
     requires std::is_void_v<T2>
@@ -714,8 +828,6 @@ public:
 
     template <class E2>
     friend constexpr bool operator==(const expected&, const unexpected<E2>&);
-
-    friend constexpr void swap(expected&, expected&) noexcept(true);
 
 private:
     union {
