@@ -1,11 +1,12 @@
 #include <type_traits>
 
+//------------------------------------------------------------------------------
+
 namespace bst {
 
 template <class E> class unexpected;
 
 template <class E> class bad_expected_access;
-
 template <> class bad_expected_access<void>;
 
 struct unexpect_t {
@@ -14,10 +15,11 @@ struct unexpect_t {
 inline constexpr unexpect_t unexpect{};
 
 template <class T, class E> class expected;
-
 template <class T, class E>
 requires std::is_void_v<T>
 class expected<T, E>;
+
+//------------------------------------------------------------------------------
 
 namespace detail {
 template <typename T, template <class> class TT>
@@ -30,6 +32,10 @@ struct is_specialization_of<TT<Args...>, TT> : std::true_type {
 } // namespace detail
 
 //------------------------------------------------------------------------------
+
+//
+// class unexpected<E>
+//
 
 template <class E> class unexpected {
 public:
@@ -101,6 +107,10 @@ private:
 
 //------------------------------------------------------------------------------
 
+//
+// class bad_exception_access<E>
+//
+
 template <class E>
 class bad_expected_access : public bad_expected_access<void> {
 public:
@@ -120,6 +130,10 @@ private:
     E val_;
 };
 
+//
+// class bad_exception_access<void>
+//
+
 // TODO
 template <> class bad_expected_access<void> : public std::exception {
 protected:
@@ -135,6 +149,10 @@ public:
 };
 
 //------------------------------------------------------------------------------
+
+//
+// class expected<T, E>
+//
 
 namespace detail {
 
@@ -414,8 +432,6 @@ public:
         return *this;
     }
 
-    // <-- here
-
     template <class... Args>
     requires std::is_nothrow_constructible_v<T, Args...>
     constexpr T& emplace(Args&&... args) noexcept
@@ -572,14 +588,34 @@ public:
     }
 
     template <class T2, class E2>
-    friend constexpr bool operator==(
-        const expected& x, const expected<T2, E2>& y);
+    requires(!std::is_void_v<T2>) friend constexpr bool operator==(
+        const expected& x, const expected<T2, E2>& y)
+    {
+        // Mandates
+
+        if (x.has_val_ != y.has_val_)
+            return false;
+        if (x.has_val_)
+            return x.val_ == y.val_;
+        else
+            return x.unex_ == y.unex_;
+    }
 
     template <class T2>
-    friend constexpr bool operator==(const expected&, const T2&);
+    friend constexpr bool operator==(const expected& x, const T2& v)
+    {
+        // Mandates
+
+        return x.has_val_ && static_cast<bool>(x.val_ == v);
+    }
 
     template <class E2>
-    friend constexpr bool operator==(const expected&, const unexpected<E2>&);
+    friend constexpr bool operator==(const expected& x, const unexpected<E2>& e)
+    {
+        // Mandates
+
+        return !x.has_val_ && static_cast<bool>(x.unex_ == e.value());
+    }
 
 private:
     union {
@@ -618,4 +654,32 @@ private:
 
 //------------------------------------------------------------------------------
 
+//
+// class expected<void, E>
+//
+
+template <class T, class E>
+requires std::is_void_v<T>
+class expected<T, E> {
+public:
+    using value_type = T;
+    using error_type = E;
+    using unexpected_type = unexpected<E>;
+
+    template <class U> using rebind = expected<U, error_type>;
+
+    constexpr expected() noexcept;
+    constexpr explicit(true) expected(const expected&);
+    constexpr explicit(true) expected(expected&&) noexcept(true);
+    template <class U, class G>
+    constexpr explicit(true) expected(const expected<U, G>&);
+    template <class U, class G>
+    constexpr explicit(true) expected(expected<U, G>&&);
+
+    template <class G> constexpr expected(const unexpected<G>&);
+    template <class G> constexpr expected(unexpected<G>&&);
+};
+
 } // namespace bst
+
+//------------------------------------------------------------------------------
