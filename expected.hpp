@@ -508,31 +508,65 @@ public:
         x.swap(y);
     }
 
-    constexpr const T* operator->() const noexcept;
-    constexpr T* operator->() noexcept;
+    constexpr const T* operator->() const noexcept
+    {
+        return std::addressof(val_);
+    }
+    constexpr T* operator->() noexcept { return std::addressof(val_); }
 
-    constexpr const T& operator*() const& noexcept;
-    constexpr T& operator*() & noexcept;
-    constexpr const T&& operator*() const&& noexcept;
-    constexpr T&& operator*() && noexcept;
+    constexpr const T& operator*() const& noexcept { return val_; }
+    constexpr T& operator*() & noexcept { return val_; }
+    constexpr const T&& operator*() const&& noexcept { return std::move(val_); }
+    constexpr T&& operator*() && noexcept { return std::move(val_); }
 
-    constexpr explicit operator bool() const noexcept;
+    constexpr explicit operator bool() const noexcept { return has_val_; }
+    constexpr bool has_value() const noexcept { return has_val_; }
 
-    constexpr bool has_value() const noexcept;
+    constexpr const T& value() const&
+    {
+        if (has_val_)
+            return val_;
+        throw bad_expected_access(error());
+    }
+    constexpr T& value() &
+    {
+        if (has_val_)
+            return val_;
+        throw bad_expected_access(error());
+    }
 
-    constexpr const T& value() const&;
-    constexpr T& value() &;
-    constexpr const T&& value() const&&;
-    constexpr T&& value() &&;
+    constexpr const T&& value() const&&
+    {
+        if (has_val_)
+            return std::move(val_);
+        throw bad_expected_access(error());
+    }
 
-    constexpr const E& error() const&;
-    constexpr E& error() &;
-    constexpr const E&& error() const&&;
-    constexpr E&& error() &&;
+    constexpr T&& value() &&
+    {
+        if (has_val_)
+            return std::move(val_);
+        throw bad_expected_access(error());
+    }
 
-    template <class U> constexpr T value_or(U&&) const&;
+    constexpr const E& error() const& { return unex_; }
+    constexpr E& error() & { return unex_; }
+    constexpr const E&& error() const&& { return std::move(unex_); }
+    constexpr E&& error() && { return std::move(unex_); }
 
-    template <class U> constexpr T value_or(U&&) &&;
+    template <class U> constexpr T value_or(U&& v) const&
+    {
+        // mandates: is_copy_constructible_v<T> is true and is_convertible<U, T>
+        // is true.
+
+        return has_val_ ? **this : static_cast<T>(std::forward<U>(v));
+    }
+
+    template <class U> constexpr T value_or(U&& v) &&
+    {
+        return has_val_ ? std::move(**this)
+                        : static_cast<T>(std::forward<U>(v));
+    }
 
     template <class T2, class E2>
     friend constexpr bool operator==(
