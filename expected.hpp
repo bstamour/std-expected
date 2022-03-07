@@ -416,12 +416,97 @@ public:
 
     // <-- here
 
-    template <class... Args> constexpr T& emplace(Args&&...) noexcept;
+    template <class... Args>
+    requires std::is_nothrow_constructible_v<T, Args...>
+    constexpr T& emplace(Args&&... args) noexcept
+    {
+        if (has_val_)
+            std::destroy_at(std::addressof(val_));
+        else {
+            std::destroy_at(std::addressof(val_));
+            has_val_ = true;
+        }
+        return *std::construct_at(
+            std::addressof(val_), std::forward<Args>(args)...);
+    }
 
     template <class U, class... Args>
-    constexpr T& emplace(std::initializer_list<U>, Args&&...) noexcept;
+    requires std::is_nothrow_constructible_v < T, std::initializer_list<U>
+    &, Args... > constexpr T& emplace(
+                     std::initializer_list<U> li, Args&&... args) noexcept
+    {
+        if (has_val_)
+            std::destroy_at(std::addressof(val_));
+        else {
+            std::destroy_at(std::addressof(val_));
+            has_val_ = true;
+        }
+        return *std::construct_at(
+            std::addressof(val_), li, std::forward<Args>(args)...);
+    }
 
-    constexpr void swap(expected&) noexcept(true);
+    constexpr void swap(expected& rhs) //
+        requires std::conjunction_v<std::is_swappable<T>, std::is_swappable<E>,
+            std::is_move_constructible<T>, std::is_move_constructible<E>,
+            std::disjunction<std::is_nothrow_move_constructible<T>,
+                std::is_nothrow_move_constructible<E>>>
+    noexcept(std::conjunction_v<std::is_nothrow_move_constructible<T>,
+        std::is_nothrow_swappable<T>, std::is_nothrow_move_constructible<E>,
+        std::is_nothrow_swappable<E>>)
+    {
+        if (has_val_ && rhs.has_val_) {
+            using std::swap;
+            swap(val_, rhs.val_);
+        }
+        else if (!has_val_ && rhs.has_val_) {
+            rhs.swap(*this);
+        }
+        else if (!has_val_ && !rhs.has_val_) {
+            using std::swap;
+            swap(unex_, rhs.unex_);
+        }
+        else {
+            // rhs.value() is false, this->has_value() is true.
+
+            if constexpr (std::is_nothrow_move_constructible_v<E>) {
+                E tmp(std::move(rhs.unex_));
+                std::destroy_at(std::addressof(rhs.unex_));
+                try {
+                    std::construct_at(
+                        std::addressof(rhs.val_), std::move(val_));
+                    std::destroy_ay(std::addressof(val_));
+                    std::construct_at(std::addressof(unex_), std::move(tmp));
+                }
+                catch (...) {
+                    std::construct_at(
+                        std::addressof(rhs.unex_), std::move(tmp));
+                    throw;
+                }
+            }
+            else {
+                T tmp(std::move(val_));
+                std::destroy_at(std::addressof(val_));
+                try {
+                    std::construct_at(
+                        std::addressof(unex_), std::move(rhs.unex_));
+                    std::destroy_at(std::addressof(rhs.unex_));
+                    std::construct_at(std::addressof(rhs.val_), std::move(tmp));
+                }
+                catch (...) {
+                    std::construct_at(std::addressof(val_), std::move(tmp));
+                    throw;
+                }
+            }
+            has_val_ = false;
+            rhs.has_val_ = true;
+        }
+    }
+
+    friend constexpr void swap(expected& x, expected& y) noexcept(
+        noexcept(x.swap(y)))
+    {
+        x.swap(y);
+    }
 
     constexpr const T* operator->() const noexcept;
     constexpr T* operator->() noexcept;
@@ -458,8 +543,6 @@ public:
 
     template <class E2>
     friend constexpr bool operator==(const expected&, const unexpected<E2>&);
-
-    friend constexpr void swap(expected&, expected&) noexcept(true);
 
 private:
     union {
