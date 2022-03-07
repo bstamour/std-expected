@@ -678,6 +678,50 @@ public:
 
     template <class G> constexpr expected(const unexpected<G>&);
     template <class G> constexpr expected(unexpected<G>&&);
+
+    constexpr explicit expected(std::in_place_t) noexcept;
+    template <class... Args> constexpr explicit expected(unexpect_t, Args&&...);
+    template <class U, class... Args>
+    constexpr explicit expected(
+        unexpect_t, std::initializer_list<U>, Args&&...);
+
+    constexpr ~expected();
+
+    constexpr expected& operator=(const expected&);
+    constexpr expected& operator=(expected&&) noexcept(true);
+    template <class G> constexpr expected& operator=(const unexpected<G>&);
+    template <class G> constexpr expected& operator=(unexpected<G>&&);
+
+    constexpr void emplace() noexcept;
+
+    constexpr void swap(expected&) noexcept(true);
+
+    constexpr explicit operator bool() const noexcept;
+    constexpr bool has_value() const noexcept;
+    constexpr void operator*() const noexcept;
+    constexpr void value() const&;
+    constexpr void value() const&&;
+
+    constexpr const E& error() const&;
+    constexpr E& error() &;
+    constexpr const E&& error() const&&;
+    constexpr E&& error() &&;
+
+    template <class T2, class E2>
+    requires std::is_void_v<T2>
+    friend constexpr bool operator==(
+        const expected& x, const expected<T2, E2>& y);
+
+    template <class E2>
+    friend constexpr bool operator==(const expected&, const unexpected<E2>&);
+
+    friend constexpr void swap(expected&, expected&) noexcept(true);
+
+private:
+    union {
+        E unex_;
+    };
+    bool has_val_;
 };
 
 } // namespace bst
