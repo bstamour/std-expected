@@ -412,7 +412,14 @@ public:
         requires std::is_default_constructible_v<T>
     : has_val_(true), val_() {}
 
-    constexpr expected(const expected& rhs) : has_val_(rhs.has_value()) {
+    constexpr expected(const expected& rhs)
+        requires std::conjunction_v<
+            std::is_copy_constructible<T>,
+            std::is_copy_constructible<E>,
+            std::disjunction<
+                std::negation<std::is_trivially_copy_constructible<T>>,
+                std::negation<std::is_trivially_copy_constructible<E>>>>
+        : has_val_(rhs.has_value()) {
         if (rhs.has_value())
             std::construct_at(std::addressof(val_), *rhs);
         else
@@ -423,6 +430,7 @@ public:
         requires(!std::is_copy_constructible_v<T> ||
                  !std::is_copy_constructible_v<E>)
     = delete;
+
     constexpr expected(const expected&)
         requires(std::is_trivially_copy_constructible_v<T> &&
                  std::is_trivially_copy_constructible_v<E>)
@@ -431,9 +439,12 @@ public:
     constexpr expected(expected&& rhs) noexcept(
         std::is_nothrow_move_constructible_v<T>&&
             std::is_nothrow_move_constructible_v<E>)
-        requires(std::is_move_constructible_v<T> &&
-                 std::is_move_constructible_v<E>)
-    {
+        requires std::conjunction_v<
+            std::is_move_constructible<T>,
+            std::is_move_constructible<E>,
+            std::disjunction<
+                std::negation<std::is_trivially_move_constructible<T>>,
+                std::negation<std::is_trivially_move_constructible<E>>>> {
         if (rhs.has_value())
             std::construct_at(std::addressof(val_), std::move(*rhs));
         else
