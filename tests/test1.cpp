@@ -1,3 +1,7 @@
+//
+// g++ -std=c++2b -I../include test1.cpp
+//
+
 #include <expected/expected.hpp>
 
 #include <type_traits>
