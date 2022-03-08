@@ -105,8 +105,8 @@ protected:
   bad_expected_access() noexcept {}
   bad_expected_access(const bad_expected_access&) {}
   bad_expected_access(bad_expected_access&&) {}
-  bad_expected_access& operator=(const bad_expected_access&) {}
-  bad_expected_access& operator=(bad_expected_access&&) {}
+  bad_expected_access& operator=(const bad_expected_access&) { return *this; }
+  bad_expected_access& operator=(bad_expected_access&&) { return *this; }
   ~bad_expected_access() {}
 
 public:
@@ -147,8 +147,8 @@ public:
   static_assert(!std::is_same_v<std::in_place_t, std::remove_cv_t<T>>, "T cannot be std::in_place_t");
   static_assert(!std::is_same_v<unexpect_t, std::remove_cv_t<T>>, "T cannot be unexpect_t");
   static_assert(!detail::is_specialization_of<T, unexpected>::value, "T must not be a specialization of unexpected");
-
-  // TODO check the param E to see if we can make an unexpected<E> from it
+  static_assert(
+      requires(E & e) { {unexpected<E>(e)}; }, "Must be able to construct an unexpected<E>");
 
   using value_type = T;
   using error_type = E;
