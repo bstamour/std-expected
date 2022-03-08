@@ -409,7 +409,7 @@ public:
     using rebind = expected<U, error_type>;
 
     constexpr expected()
-        requires std::is_default_constructible_v<E>
+        requires std::is_default_constructible_v<T>
     : has_val_(true), val_() {}
 
     constexpr expected(const expected& rhs) : has_val_(rhs.has_value()) {
