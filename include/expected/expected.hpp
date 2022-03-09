@@ -444,7 +444,8 @@ public:
             std::is_move_constructible<E>,
             std::disjunction<
                 std::negation<std::is_trivially_move_constructible<T>>,
-                std::negation<std::is_trivially_move_constructible<E>>>> {
+                std::negation<std::is_trivially_move_constructible<E>>>>
+        : has_val_(rhs.has_val_) {
         if (rhs.has_value())
             std::construct_at(std::addressof(val_), std::move(*rhs));
         else
