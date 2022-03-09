@@ -2,6 +2,7 @@
 
 #include <gtest/gtest.h>
 
+#include <memory>
 #include <type_traits>
 
 //------------------------------------------------------------------------------
@@ -68,7 +69,56 @@ static_assert(
 // Runtime behavioural tests.
 //
 
-TEST(HelloTest, BasicAssertions) {
-    EXPECT_STRNE("hello", "world");
-    EXPECT_EQ(7 * 6, 42);
+TEST(DefaultConstructTest, ConstructorTests) {
+    bst::expected<int, int> e1;
+    EXPECT_EQ(e1.has_value(), true);
+
+    struct X {
+        int x = 42;
+    };
+    bst::expected<X, int> e2;
+    EXPECT_EQ(e2.has_value(), true);
+    EXPECT_EQ(e2->x, 42);
+}
+
+TEST(CopyConstructFromSameExpectedTest, ConstructorTests) {
+    bst::expected<int, int> e1;
+    bst::expected<int, int> e2 = e1;
+    EXPECT_EQ(e2.has_value(), true);
+
+    struct X {
+        int x = 42;
+    };
+    bst::expected<X, int> e3;
+    bst::expected<X, int> e4 = e3;
+    EXPECT_EQ(e4.has_value(), true);
+    EXPECT_EQ(e4->x, 42);
+}
+
+TEST(CopyConstructFromValueTypeTest, ConstructorTests) {
+    bst::expected<int, int> e1(42);
+    EXPECT_EQ(e1.has_value(), true);
+    EXPECT_EQ(e1.value(), 42);
+}
+
+TEST(MoveConstructFromValueTypeTest, ConstructorTests) {
+    bst::expected<std::unique_ptr<int>, int> e1(std::make_unique<int>(42));
+    EXPECT_EQ(e1.has_value(), true);
+    EXPECT_EQ((bool)e1.value(), true);
+    EXPECT_EQ(**e1, 42);
+}
+
+TEST(MoveConstructFromSameExpectedTest, ConstructorTests) {
+    bst::expected<int, int> e1;
+    bst::expected<int, int> e2 = std::move(e1);
+    EXPECT_EQ(e2.has_value(), true);
+
+    std::unique_ptr<int> data{new int(42)};
+
+    bst::expected<decltype(data), int> e3(std::move(data));
+    bst::expected<decltype(data), int> e4 = std::move(e3);
+
+    EXPECT_EQ(e4.has_value(), true);
+    EXPECT_EQ(**e4, 42);
+    EXPECT_EQ(*e3, nullptr);
 }
