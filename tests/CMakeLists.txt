@@ -4,6 +4,14 @@ cmake_minimum_required(VERSION 3.19)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# get CMAKE to generate c++latest
+if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.20)
+  if(MSVC)
+    message(STATUS "recent cmake c++20 -> c++latest compatibility workaround")
+    target_compile_features(${APP_TARGET} PUBLIC cxx_std_23)
+  endif()
+endif()
+
 project(std_expected_tests)
 
 include(FetchContent)
