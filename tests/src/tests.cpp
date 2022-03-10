@@ -69,7 +69,9 @@ static_assert(
 // Runtime behavioural tests.
 //
 
-TEST(DefaultConstructTest, ConstructorTests) {
+// Default construction
+
+TEST(ConstructorTests, DefaultConstructTest) {
     bst::expected<int, int> e1;
     EXPECT_EQ(e1.has_value(), true);
 
@@ -81,7 +83,9 @@ TEST(DefaultConstructTest, ConstructorTests) {
     EXPECT_EQ(e2->x, 42);
 }
 
-TEST(CopyConstructFromSameExpectedTest, ConstructorTests) {
+// Copy construction
+
+TEST(ConstructorTests, CopyConstructFromSameExpectedTest) {
     bst::expected<int, int> e1;
     bst::expected<int, int> e2 = e1;
     EXPECT_EQ(e2.has_value(), true);
@@ -95,20 +99,29 @@ TEST(CopyConstructFromSameExpectedTest, ConstructorTests) {
     EXPECT_EQ(e4->x, 42);
 }
 
-TEST(CopyConstructFromValueTypeTest, ConstructorTests) {
+TEST(ConstructorTests, CopyConstructFromDifferentExpectedTest) {
+   bst::expected<int, int> e1(42);
+   bst::expected<long, int> e2(e1);
+   EXPECT_EQ(e2.has_value(), true);
+   EXPECT_EQ(*e2, 42);
+}
+
+TEST(ConstructorTests, CopyConstructFromValueTypeTest) {
     bst::expected<int, int> e1(42);
     EXPECT_EQ(e1.has_value(), true);
     EXPECT_EQ(e1.value(), 42);
 }
 
-TEST(MoveConstructFromValueTypeTest, ConstructorTests) {
+// Move construction
+
+TEST(ConstructorTests, MoveConstructFromValueTypeTest) {
     bst::expected<std::unique_ptr<int>, int> e1(std::make_unique<int>(42));
     EXPECT_EQ(e1.has_value(), true);
     EXPECT_EQ((bool)e1.value(), true);
     EXPECT_EQ(**e1, 42);
 }
 
-TEST(MoveConstructFromSameExpectedTest, ConstructorTests) {
+TEST(ConstructorTests, MoveConstructFromSameExpectedTest) {
     bst::expected<int, int> e1;
     bst::expected<int, int> e2 = std::move(e1);
     EXPECT_EQ(e2.has_value(), true);
