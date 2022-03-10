@@ -258,9 +258,9 @@ inline constexpr unexpect_t unexpect{};
 
 template <class T, class E>
 class expected;
-template <class T, class E>
-    requires std::is_void_v<T>
-class expected<T, E>;
+
+template <class E>
+class expected<void, E>;
 
 //------------------------------------------------------------------------------
 
@@ -396,10 +396,8 @@ public:
                   "T cannot be unexpect_t");
     static_assert(!detail::is_specialization_of<T, unexpected>::value,
                   "T must not be a specialization of unexpected");
-    static_assert(
-        requires(E & e) {
-            { unexpected<E>(e) };
-        }, "Must be able to construct an unexpected<E>");
+    static_assert(std::is_constructible_v<unexpected<E>, E&>, 
+                  "Must be able to construct an unexpected<E>");
 
     using value_type = T;
     using error_type = E;
