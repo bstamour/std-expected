@@ -477,8 +477,8 @@ public:
     constexpr explicit(!std::is_convertible_v<const U&, T> ||
                        !std::is_convertible_v<const G&, E>)
         expected(const expected<U, G>& rhs)
-        : has_val_(rhs.has_val_) {
-        if (rhs.has_value())
+        : has_val_(rhs.has_value()) {
+        if (has_val_)
             std::construct_at(std::addressof(val_),
                               std::forward<const U&>(*rhs));
         else
@@ -508,8 +508,8 @@ public:
     constexpr explicit(!std::is_convertible_v<U, T> ||
                        !std::is_convertible_v<G, E>)
         expected(expected<U, G>&& rhs)
-        : has_val_(rhs.has_val_) {
-        if (rhs.has_value())
+        : has_val_(rhs.has_value()) {
+        if (has_val_)
             std::construct_at(std::addressof(val_), std::forward<U>(*rhs));
         else
             std::construct_at(std::addressof(unex_),
