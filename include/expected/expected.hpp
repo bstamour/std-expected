@@ -312,7 +312,7 @@ public:
     constexpr unexpected& operator=(unexpected&&) = default;
 
     constexpr const E& value() const& noexcept { return val_; }
-    constexpr E& valie() & noexcept { return val_; }
+    constexpr E& value() & noexcept { return val_; }
     constexpr const E&& value() const&& noexcept { return std::move(val_); }
     constexpr E&& value() && noexcept { return std::move(val_); }
 
@@ -527,12 +527,12 @@ public:
         requires std::is_constructible_v<E, const G&>
     constexpr explicit(!std::is_convertible_v<const G&, E>)
         expected(const unexpected<G>& e)
-        : has_val_(false), unex_(std::forward<const G&>(e.error())) {}
+        : has_val_(false), unex_(std::forward<const G&>(e.value())) {}
 
     template <class G>
         requires std::is_constructible_v<E, G>
     constexpr explicit(!std::is_convertible_v<G, E>) expected(unexpected<G>&& e)
-        : has_val_(false), unex_(std::forward<G>(e.error())) {}
+        : has_val_(false), unex_(std::forward<G>(e.value())) {}
 
     template <class... Args>
         requires std::is_constructible_v<T, Args...>

@@ -135,3 +135,14 @@ TEST(ConstructorTests, MoveConstructFromSameExpectedTest) {
     EXPECT_EQ(**e4, 42);
     EXPECT_EQ(*e3, nullptr);
 }
+
+// Construction from an unexpected
+
+TEST(ConstructorTests, ConstructFromUnexpected) {
+    bst::unexpected<int> unex(42);
+
+    bst::expected<int, int> ex(unex);
+
+    EXPECT_EQ(ex.has_value(), false);
+    EXPECT_EQ(ex.error(), 42);
+}
