@@ -338,7 +338,7 @@ private:
 };
 
 template <class E>
-unexpected(E&&) -> unexpected<E>;
+unexpected(E&&) -> unexpected<std::remove_cvref_t<E>>;
 
 //------------------------------------------------------------------------------
 
