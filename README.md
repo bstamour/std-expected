@@ -26,7 +26,7 @@ public:
     constexpr unexpected& operator=(unexpected&&) = default;
 
     constexpr const E& value() const& noexcept;
-    constexpr E& valie() & noexcept;
+    constexpr E& value() & noexcept;
     constexpr const E&& value() const&& noexcept;
     constexpr E&& value() && noexcept;
 
