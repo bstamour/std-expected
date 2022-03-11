@@ -139,7 +139,7 @@ TEST(ConstructorTests, MoveConstructFromSameExpectedTest) {
 // Construction from an unexpected
 
 TEST(ConstructorTests, ConstructFromUnexpected) {
-    bst::unexpected<int> unex(42);
+    bst::unexpected unex(42);
 
     bst::expected<int, int> ex(unex);
 
