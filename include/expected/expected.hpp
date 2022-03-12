@@ -399,7 +399,7 @@ public:
                   "T cannot be unexpect_t");
     static_assert(!detail::is_specialization_of<T, unexpected>::value,
                   "T must not be a specialization of unexpected");
-    static_assert(std::is_constructible_v<unexpected<E>, E&>, 
+    static_assert(std::is_constructible_v<unexpected<E>, E&>,
                   "Must be able to construct an unexpected<E>");
 
     using value_type = T;
@@ -733,7 +733,8 @@ public:
                 } catch (...) {
                     std::construct_at(std::addressof(rhs.unex_),
                                       std::move(tmp));
-                    throw;
+                    if constexpr (!std::is_nothrow_move_constructible_v<T>)
+                        throw;
                 }
             } else {
                 T tmp(std::move(val_));
