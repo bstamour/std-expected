@@ -147,3 +147,16 @@ TEST(ConstructorTests, ConstructFromUnexpected) {
     EXPECT_EQ(ex.has_value(), false);
     EXPECT_EQ(ex.error(), 42);
 }
+
+// Swapping
+
+TEST(SwapTests, ActiveWithActive) {
+    bst::expected<int, int> e1(42), e2(12);
+
+    e1.swap(e2);
+    EXPECT_EQ(e1.has_value(), true);
+    EXPECT_EQ(e2.has_value(), true);
+
+    EXPECT_EQ(*e1, 12);
+    EXPECT_EQ(*e2, 42);
+}
