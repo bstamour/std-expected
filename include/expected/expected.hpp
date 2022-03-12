@@ -409,9 +409,17 @@ public:
     template <class U>
     using rebind = expected<U, error_type>;
 
+    //
+    // Default constructor
+    //
+
     constexpr expected()
         requires std::is_default_constructible_v<T>
-    : has_val_(true), val_() {}
+    : val_(), has_val_(true) {}
+
+    //
+    // Copy constructor
+    //
 
     constexpr expected(const expected& rhs)
         requires std::conjunction_v<
@@ -437,6 +445,10 @@ public:
                  std::is_trivially_copy_constructible_v<E>)
     = default;
 
+    //
+    // Move constructor
+    //
+
     constexpr expected(expected&& rhs) noexcept(
         std::is_nothrow_move_constructible_v<T>&&
             std::is_nothrow_move_constructible_v<E>)
@@ -457,6 +469,10 @@ public:
         requires(std::is_trivially_move_constructible_v<T> &&
                  std::is_trivially_move_constructible_v<E>)
     = default;
+
+    //
+    // Converting constructor
+    //
 
     template <class U, class G, class UF = const U&, class GF = const G&>
         requires(std::conjunction_v<
@@ -519,46 +535,66 @@ public:
                               std::forward<G>(rhs.error()));
     }
 
+    //
+    // Converting constructor from value
+    //
+
     template <class U = T>
         requires(!std::is_same_v<std::remove_cvref_t<U>, std::in_place_t> &&
                  !std::is_same_v<expected<T, E>, std::remove_cvref_t<U>> &&
                  std::is_constructible_v<T, U>)
     constexpr explicit(!std::is_convertible_v<U, T>) expected(U&& v)
-        : has_val_(true), val_(std::forward<U>(v)) {}
+        : val_(std::forward<U>(v)), has_val_(true) {}
+
+    //
+    // Construct from unexpected
+    //
 
     template <class G>
         requires std::is_constructible_v<E, const G&>
     constexpr explicit(!std::is_convertible_v<const G&, E>)
         expected(const unexpected<G>& e)
-        : has_val_(false), unex_(std::forward<const G&>(e.value())) {}
+        : unex_(std::forward<const G&>(e.value())), has_val_(false) {}
 
     template <class G>
         requires std::is_constructible_v<E, G>
     constexpr explicit(!std::is_convertible_v<G, E>) expected(unexpected<G>&& e)
-        : has_val_(false), unex_(std::forward<G>(e.value())) {}
+        : unex_(std::forward<G>(e.value())), has_val_(false) {}
+
+    //
+    // In-place construct expected value
+    //
 
     template <class... Args>
         requires std::is_constructible_v<T, Args...>
     constexpr explicit expected(std::in_place_t, Args&&... args)
-        : has_val_(true), val_(std::forward<Args>(args)...) {}
+        : val_(std::forward<Args>(args)...), has_val_(true) {}
 
     template <class U, class... Args>
         requires(std::is_constructible_v<T, std::initializer_list<U>&,
                                          Args...>) //
     constexpr explicit expected(std::in_place_t, std::initializer_list<U> il,
                                 Args&&... args)
-        : has_val_(true), val_(il, std::forward<Args>(args)...) {}
+        : val_(il, std::forward<Args>(args)...), has_val_(true) {}
+
+    //
+    // In-place construct unexpected value
+    //
 
     template <class... Args>
         requires std::is_constructible_v<E, Args...>
     constexpr explicit expected(unexpect_t, Args&&... args)
-        : has_val_(false), unex_(std::forward<Args>(args)...) {}
+        : unex_(std::forward<Args>(args)...), has_val_(false) {}
 
     template <class U, class... Args>
         requires(std::is_constructible_v<E, std::initializer_list<U>&, Args...>)
     constexpr explicit expected(unexpect_t, std::initializer_list<U> il,
                                 Args&&... args)
-        : has_val_(false), unex_(il, std::forward<Args>(args)...) {}
+        : unex_(il, std::forward<Args>(args)...), has_val_(false) {}
+
+    //
+    // Destructor
+    //
 
     constexpr ~expected() {
         if (has_val_)
