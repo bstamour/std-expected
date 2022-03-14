@@ -69,6 +69,7 @@ static_assert(
 // Runtime behavioural tests.
 //
 
+//------------------------------------------------------------------------------
 // Default construction
 
 TEST(ConstructorTests, DefaultConstructTest) {
@@ -83,6 +84,7 @@ TEST(ConstructorTests, DefaultConstructTest) {
     EXPECT_EQ(e2->x, 42);
 }
 
+//------------------------------------------------------------------------------
 // Copy construction
 
 TEST(ConstructorTests, CopyConstructFromSameExpectedTest) {
@@ -112,6 +114,7 @@ TEST(ConstructorTests, CopyConstructFromValueTypeTest) {
     EXPECT_EQ(e1.value(), 42);
 }
 
+//------------------------------------------------------------------------------
 // Move construction
 
 TEST(ConstructorTests, MoveConstructFromValueTypeTest) {
@@ -136,6 +139,7 @@ TEST(ConstructorTests, MoveConstructFromSameExpectedTest) {
     EXPECT_EQ(*e3, nullptr);
 }
 
+//------------------------------------------------------------------------------
 // Construction from an unexpected
 
 TEST(ConstructorTests, ConstructFromUnexpected) {
@@ -148,6 +152,7 @@ TEST(ConstructorTests, ConstructFromUnexpected) {
     EXPECT_EQ(ex.error(), 42);
 }
 
+//------------------------------------------------------------------------------
 // Assignment
 
 TEST(AssignmentTests, CopyAssignFromOther) {
@@ -193,9 +198,6 @@ TEST(AssignmentTests, CopyAssignFromUserDeclared) {
     EXPECT_EQ(*e1, 100);
 }
 
-
-
-
 TEST(AssignmentTests, MoveAssignFromOther) {
     bst::expected<int, int> e1(42);
     bst::expected<int, int> e2(12);
@@ -237,6 +239,7 @@ TEST(AssignmentTests, MoveAssignFromUserDeclared) {
     EXPECT_EQ(*e1, 100);
 }
 
+//------------------------------------------------------------------------------
 // Swapping
 
 TEST(SwapTests, ActiveWithActive) {
@@ -248,4 +251,37 @@ TEST(SwapTests, ActiveWithActive) {
 
     EXPECT_EQ(*e1, 12);
     EXPECT_EQ(*e2, 42);
+}
+
+TEST(SwapTests, InactiveWithInactive) {
+    bst::expected<int, int> e1(bst::unexpect, 1), e2(bst::unexpect, 2);
+
+    e1.swap(e2);
+    EXPECT_EQ(e1.has_value(), false);
+    EXPECT_EQ(e2.has_value(), false);
+
+    EXPECT_EQ(e1.error(), 2);
+    EXPECT_EQ(e2.error(), 1);
+}
+
+TEST(SwapTests, ActiveWithInactive) {
+    bst::expected<int, int> e1(1), e2(bst::unexpect, 2);
+
+    e1.swap(e2);
+    EXPECT_EQ(e1.has_value(), false);
+    EXPECT_EQ(e2.has_value(), true);
+
+    EXPECT_EQ(e1.error(), 2);
+    EXPECT_EQ(*e2, 1);
+}
+
+TEST(SwapTests, InactiveWithActive) {
+    bst::expected<int, int> e1(bst::unexpect, 1), e2(2);
+
+    e1.swap(e2);
+    EXPECT_EQ(e1.has_value(), true);
+    EXPECT_EQ(e2.has_value(), false);
+
+    EXPECT_EQ(*e1, 2);
+    EXPECT_EQ(e2.error(), 1);
 }
