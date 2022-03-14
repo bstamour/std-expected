@@ -608,7 +608,7 @@ public:
                                     std::is_trivially_destructible<E>>)
     = default;
 
-    // Others
+    // Copy Assignment Operator
 
     constexpr expected& operator=(const expected& rhs) {
         if (has_val_ && rhs.has_val_)
@@ -632,6 +632,8 @@ public:
                                      std::is_nothrow_move_constructible<T>>>)
     = delete;
 
+    // Move Assignment Operator
+    
     constexpr expected& operator=(expected&& rhs) noexcept(
         std::conjunction_v<std::is_nothrow_move_assignable<E>,
                            std::is_nothrow_move_constructible<E>,
@@ -656,6 +658,8 @@ public:
         return *this;
     }
 
+    // Value Assignment Operator
+    
     template <class U = T>
         requires(std::conjunction_v<
                  std::negation<std::is_same<expected, std::remove_cvref_t<U>>>,
@@ -675,6 +679,8 @@ public:
         return *this;
     }
 
+    // Unexpected Copy Assignment Operator
+
     template <class G, class GF = const G&>
         requires(std::conjunction_v<
                  std::is_constructible<E, GF>, std::is_assignable<E&, GF>,
@@ -690,6 +696,8 @@ public:
         }
         return *this;
     }
+
+    // Unexpected Move Assignment Operator
 
     template <class G, class GF = G>
         requires(std::conjunction_v<
@@ -795,6 +803,13 @@ public:
         x.swap(y);
     }
 
+    // Querying
+    
+    constexpr explicit operator bool() const noexcept { return has_val_; }
+    constexpr bool has_value() const noexcept { return has_val_; }
+
+    // Visitors
+    
     constexpr const T* operator->() const noexcept {
         return std::addressof(val_);
     }
@@ -804,9 +819,6 @@ public:
     constexpr T& operator*() & noexcept { return val_; }
     constexpr const T&& operator*() const&& noexcept { return std::move(val_); }
     constexpr T&& operator*() && noexcept { return std::move(val_); }
-
-    constexpr explicit operator bool() const noexcept { return has_val_; }
-    constexpr bool has_value() const noexcept { return has_val_; }
 
     constexpr const T& value() const& {
         if (has_val_)
@@ -853,6 +865,8 @@ public:
                         : static_cast<T>(std::forward<U>(v));
     }
 
+    // Equality Comparrison
+    
     template <class T2, class E2>
         requires(!std::is_void_v<T2>)
     friend constexpr bool operator==(const expected& x,
