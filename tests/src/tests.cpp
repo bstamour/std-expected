@@ -193,6 +193,50 @@ TEST(AssignmentTests, CopyAssignFromUserDeclared) {
     EXPECT_EQ(*e1, 100);
 }
 
+
+
+
+TEST(AssignmentTests, MoveAssignFromOther) {
+    bst::expected<int, int> e1(42);
+    bst::expected<int, int> e2(12);
+    e1 = std::move(e2);
+    EXPECT_EQ(e1.has_value(), true);
+    EXPECT_EQ(*e1, 12);
+}
+
+TEST(AssignmentTests, MoveAssignFromUnexpected) {
+    bst::expected<int, int> e1(42);
+    e1 = bst::unexpected<int>(12);
+    EXPECT_EQ(e1.has_value(), false);
+    EXPECT_EQ(e1.error(), 12);
+}
+
+TEST(AssignmentTests, MoveAssignFromValue) {
+    bst::expected<int, int> e1(42);
+    e1 = 100;
+    EXPECT_EQ(e1.has_value(), true);
+    EXPECT_EQ(*e1, 100);
+}
+
+TEST(AssignmentTests, MoveAssignFromConvertible) {
+   bst::expected<int, int> e1(42);
+    e1 =     bst::expected<short, int>(5);
+    EXPECT_EQ(e1.has_value(), true);
+    EXPECT_EQ(*e1, 5);
+}
+
+TEST(AssignmentTests, MoveAssignFromUserDeclared) {
+   bst::expected<int, int> e1(42);
+    struct X {
+	int v = 100;
+	operator int() const { return v; }
+    } x;
+    bst::expected<X, int> e4(x);
+    e1 = std::move(e4);
+    EXPECT_EQ(e1.has_value(), true);
+    EXPECT_EQ(*e1, 100);
+}
+
 // Swapping
 
 TEST(SwapTests, ActiveWithActive) {
