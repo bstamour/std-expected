@@ -325,7 +325,7 @@ public:
     template <class E2>
     friend constexpr bool operator==(const unexpected& lhs,
                                      const unexpected<E2>& rhs) {
-        return lhs.value() == rhs.value();
+        return lhs.error() == rhs.error();
     }
 
     friend constexpr void swap(unexpected& x,
@@ -554,12 +554,12 @@ public:
         requires std::is_constructible_v<E, const G&>
     constexpr explicit(!std::is_convertible_v<const G&, E>)
         expected(const unexpected<G>& e)
-        : unex_(std::forward<const G&>(e.value())), has_val_(false) {}
+        : unex_(std::forward<const G&>(e.error())), has_val_(false) {}
 
     template <class G>
         requires std::is_constructible_v<E, G>
     constexpr explicit(!std::is_convertible_v<G, E>) expected(unexpected<G>&& e)
-        : unex_(std::forward<G>(e.value())), has_val_(false) {}
+        : unex_(std::forward<G>(e.error())), has_val_(false) {}
 
     //
     // In-place construct expected value
@@ -689,10 +689,10 @@ public:
                                   std::is_nothrow_move_constructible<E>>>)
     constexpr expected& operator=(const unexpected<G>& e) {
         if (has_val_) {
-            reinit_expected(unex_, val_, std::forward<GF>(e.value()));
+            reinit_expected(unex_, val_, std::forward<GF>(e.error()));
             has_val_ = false;
         } else {
-            unex_ = std::forward<GF>(e.value());
+            unex_ = std::forward<GF>(e.error());
         }
         return *this;
     }
@@ -707,10 +707,10 @@ public:
                                   std::is_nothrow_move_constructible<E>>>)
     constexpr expected& operator=(unexpected<G>&& e) {
         if (has_val_) {
-            reinit_expected(unex_, val_, std::forward<GF>(e.value()));
+            reinit_expected(unex_, val_, std::forward<GF>(e.error()));
             has_val_ = false;
         } else {
-            unex_ = std::forward<GF>(e.value());
+            unex_ = std::forward<GF>(e.error());
         }
         return *this;
     }
@@ -893,7 +893,7 @@ public:
                                      const unexpected<E2>& e) {
         // TODO Mandates
 
-        return !x.has_val_ && static_cast<bool>(x.unex_ == e.value());
+        return !x.has_val_ && static_cast<bool>(x.unex_ == e.error());
     }
 
 private:
@@ -1014,14 +1014,14 @@ public:
     constexpr explicit(std::is_convertible_v<GF, E>)
         expected(const unexpected<G>& e)
         : has_val_(false) {
-        std::construct_at(std::addressof(unex_), std::forward<GF>(e.value()));
+        std::construct_at(std::addressof(unex_), std::forward<GF>(e.error()));
     }
 
     template <class G, class GF = G>
         requires(std::is_constructible_v<E, GF>)
     constexpr explicit(std::is_convertible_v<GF, E>) expected(unexpected<G>&& e)
         : has_val_(false) {
-        std::construct_at(std::addressof(unex_), std::forward<GF>(e.value()));
+        std::construct_at(std::addressof(unex_), std::forward<GF>(e.error()));
     }
 
     constexpr explicit expected(std::in_place_t) noexcept : has_val_(true) {}
@@ -1096,10 +1096,10 @@ public:
     constexpr expected& operator=(const unexpected<G>& e) {
         if (has_val_) {
             std::construct_at(std::addressof(unex_),
-                              std::forward<GF>(e.value()));
+                              std::forward<GF>(e.error()));
             has_val_ = false;
         } else {
-            unex_ = std::forward<GF>(e.value());
+            unex_ = std::forward<GF>(e.error());
         }
         return *this;
     }
@@ -1110,10 +1110,10 @@ public:
     constexpr expected& operator=(unexpected<G>&& e) {
         if (has_val_) {
             std::construct_at(std::addressof(unex_),
-                              std::forward<GF>(e.value()));
+                              std::forward<GF>(e.error()));
             has_val_ = false;
         } else {
-            unex_ = std::forward<GF>(e.value());
+            unex_ = std::forward<GF>(e.error());
         }
         return *this;
     }
@@ -1184,7 +1184,7 @@ public:
                                      const unexpected<E2>& e) {
         // TODO mandates
 
-        return !x.has_val_ && static_cast<bool>(x.error() == e.value());
+        return !x.has_val_ && static_cast<bool>(x.error() == e.error());
     }
 
 private:
