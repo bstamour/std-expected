@@ -25,10 +25,10 @@ public:
     constexpr unexpected& operator=(const unexpected&) = default;
     constexpr unexpected& operator=(unexpected&&) = default;
 
-    constexpr const E& value() const& noexcept;
-    constexpr E& value() & noexcept;
-    constexpr const E&& value() const&& noexcept;
-    constexpr E&& value() && noexcept;
+    constexpr const E& error() const& noexcept;
+    constexpr E& error() & noexcept;
+    constexpr const E&& error() const&& noexcept;
+    constexpr E&& error() && noexcept;
 
     constexpr void swap(unexpected& other) noexcept(conditional);
 

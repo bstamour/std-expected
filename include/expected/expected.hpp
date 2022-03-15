@@ -26,10 +26,10 @@ public:
     constexpr unexpected& operator=(const unexpected&) = default;
     constexpr unexpected& operator=(unexpected&&) = default;
 
-    constexpr const E& value() const& noexcept;
-    constexpr E& value() & noexcept;
-    constexpr const E&& value() const&& noexcept;
-    constexpr E&& value() && noexcept;
+    constexpr const E& error() const& noexcept;
+    constexpr E& error() & noexcept;
+    constexpr const E&& error() const&& noexcept;
+    constexpr E&& error() && noexcept;
 
     constexpr void swap(unexpected& other) noexcept(conditional);
 
@@ -311,10 +311,10 @@ public:
     constexpr unexpected& operator=(const unexpected&) = default;
     constexpr unexpected& operator=(unexpected&&) = default;
 
-    constexpr const E& value() const& noexcept { return val_; }
-    constexpr E& value() & noexcept { return val_; }
-    constexpr const E&& value() const&& noexcept { return std::move(val_); }
-    constexpr E&& value() && noexcept { return std::move(val_); }
+    constexpr const E& error() const& noexcept { return val_; }
+    constexpr E& error() & noexcept { return val_; }
+    constexpr const E&& error() const&& noexcept { return std::move(val_); }
+    constexpr E&& error() && noexcept { return std::move(val_); }
 
     constexpr void
     swap(unexpected& other) noexcept(std::is_nothrow_swappable_v<E>) {
