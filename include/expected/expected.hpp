@@ -1,6 +1,8 @@
 #ifndef BST_EXPECTED_HPP_
 #define BST_EXPECTED_HPP_
 
+//#define BST_EXPECTED_MONADIC_INTERFACE
+
 //------------------------------------------------------------------------------
 
 //
@@ -868,6 +870,28 @@ public:
                         : static_cast<T>(std::forward<U>(v));
     }
 
+#ifdef BST_EXPECTED_MONADIC_INTERFACE
+    template <class F> constexpr auto and_then(F&& f) &;
+    template <class F> constexpr auto and_then(F&& f) &&;
+    template <class F> constexpr auto and_then(F&& f) const&;
+    template <class F> constexpr auto and_then(F&& f) const&&;
+
+    template <class F> constexpr auto or_else(F&& f) &;
+    template <class F> constexpr auto or_else(F&& f) &&;
+    template <class F> constexpr auto or_else(F&& f) const&;
+    template <class F> constexpr auto or_else(F&& f) const&&;
+
+    template <class F> constexpr auto transform(F&& f) &;
+    template <class F> constexpr auto transform(F&& f) &&;
+    template <class F> constexpr auto transform(F&& f) const&;
+    template <class F> constexpr auto transform(F&& f) const&&;
+
+    template <class F> constexpr auto transform_or(F&& f) &;
+    template <class F> constexpr auto transform_or(F&& f) &&;
+    template <class F> constexpr auto transform_or(F&& f) const&;
+    template <class F> constexpr auto transform_or(F&& f) const&&;
+#endif
+    
     // Equality Comparrison
     
     template <class T2, class E2>
