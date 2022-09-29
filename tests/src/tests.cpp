@@ -37,6 +37,11 @@ struct A {
 static_assert(std::is_default_constructible_v<bst::expected<int, int>>);
 static_assert(!std::is_default_constructible_v<bst::expected<X, int>>);
 
+// Can we instantiate it with non-trivial types.
+static_assert(std::is_default_constructible_v<bst::expected<std::string, int>>);
+static_assert(std::is_default_constructible_v<bst::expected<int, std::string>>);
+static_assert(std::is_default_constructible_v<bst::expected<std::string, std::string>>);
+
 // Copy construction.
 static_assert(std::is_constructible_v<bst::expected<int, int>,
                                       const bst::expected<int, int>&>);
@@ -84,6 +89,19 @@ TEST(ConstructorTests, DefaultConstructTest) {
     EXPECT_EQ(e2->x, 42);
 }
 
+// Construction with a non-trivial type
+
+TEST(ConstructorTests, NonTrivialDefaultConstructTest) {
+  bst::expected<std::string, int> e1;
+  EXPECT_EQ(e1.has_value(), true);
+  EXPECT_EQ(e1->empty(), true);
+
+  bst::expected<std::string, int> e2 = "hello";
+  EXPECT_EQ(e2.has_value(), true);
+  EXPECT_EQ(e2->empty(), false);
+  EXPECT_EQ(e2.value(), "hello");
+}
+
 //------------------------------------------------------------------------------
 // Copy construction
 
@@ -99,6 +117,11 @@ TEST(ConstructorTests, CopyConstructFromSameExpectedTest) {
     bst::expected<X, int> e4 = e3;
     EXPECT_EQ(e4.has_value(), true);
     EXPECT_EQ(e4->x, 42);
+
+    bst::expected<std::string, int> e5 = "hello";
+    bst::expected<std::string, int> e6 = e5;
+    EXPECT_EQ(e6.has_value(), true);
+    EXPECT_EQ(e6.value() == e5.value(), true);
 }
 
 TEST(ConstructorTests, CopyConstructFromDifferentExpectedTest) {

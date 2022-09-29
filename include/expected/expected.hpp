@@ -1,9 +1,7 @@
 #ifndef BST_EXPECTED_HPP_
 #define BST_EXPECTED_HPP_
 
-//#define BST_EXPECTED_MONADIC_INTERFACE
-
-//------------------------------------------------------------------------------
+// #define BST_EXPECTED_MONADIC_INTERFACE
 
 //
 // An implementation of std::expected from the upcomming C++23
@@ -236,7 +234,6 @@ public:
 
 */
 
-//------------------------------------------------------------------------------
 
 #include <exception>
 #include <initializer_list>
@@ -244,7 +241,6 @@ public:
 #include <type_traits>
 #include <utility>
 
-//------------------------------------------------------------------------------
 
 namespace bst {
 
@@ -267,7 +263,7 @@ class expected;
 template <class E>
 class expected<void, E>;
 
-//------------------------------------------------------------------------------
+
 
 namespace detail {
 template <typename T, template <class> class TT>
@@ -277,7 +273,7 @@ template <template <class> class TT, class... Args>
 struct is_specialization_of<TT<Args...>, TT> : std::true_type {};
 } // namespace detail
 
-//------------------------------------------------------------------------------
+
 
 //
 // class unexpected<E>
@@ -345,7 +341,7 @@ private:
 template <class E>
 unexpected(E&&) -> unexpected<std::remove_cvref_t<E>>;
 
-//------------------------------------------------------------------------------
+
 
 //
 // class bad_exception_access<void>
@@ -387,7 +383,7 @@ private:
     E val_;
 };
 
-//------------------------------------------------------------------------------
+
 
 //
 // class expected<T, E>
@@ -433,7 +429,7 @@ public:
             std::disjunction<
                 std::negation<std::is_trivially_copy_constructible<T>>,
                 std::negation<std::is_trivially_copy_constructible<E>>>>
-        : has_val_(rhs.has_value()) {
+		: invalid_{}, has_val_(rhs.has_value()) {
         if (rhs.has_value())
             std::construct_at(std::addressof(val_), *rhs);
         else
@@ -463,7 +459,7 @@ public:
             std::disjunction<
                 std::negation<std::is_trivially_move_constructible<T>>,
                 std::negation<std::is_trivially_move_constructible<E>>>>
-        : has_val_(rhs.has_val_) {
+		: invalid_{}, has_val_(rhs.has_val_) {
         if (rhs.has_value())
             std::construct_at(std::addressof(val_), std::move(*rhs));
         else
@@ -501,7 +497,7 @@ public:
     constexpr explicit(!std::is_convertible_v<const U&, T> ||
                        !std::is_convertible_v<const G&, E>)
         expected(const expected<U, G>& rhs)
-        : has_val_(rhs.has_value()) {
+        : invalid_{}, has_val_(rhs.has_value()) {
         if (has_val_)
             std::construct_at(std::addressof(val_),
                               std::forward<const U&>(*rhs));
@@ -532,7 +528,7 @@ public:
     constexpr explicit(!std::is_convertible_v<U, T> ||
                        !std::is_convertible_v<G, E>)
         expected(expected<U, G>&& rhs)
-        : has_val_(rhs.has_value()) {
+        : invalid_{}, has_val_(rhs.has_value()) {
         if (has_val_)
             std::construct_at(std::addressof(val_), std::forward<U>(*rhs));
         else
@@ -638,7 +634,7 @@ public:
     = delete;
 
     // Move Assignment Operator
-    
+
     constexpr expected& operator=(expected&& rhs) noexcept(
         std::conjunction_v<std::is_nothrow_move_assignable<E>,
                            std::is_nothrow_move_constructible<E>,
@@ -664,7 +660,7 @@ public:
     }
 
     // Value Assignment Operator
-    
+
     template <class U = T>
         requires(std::conjunction_v<
                  std::negation<std::is_same<expected, std::remove_cvref_t<U>>>,
@@ -809,12 +805,12 @@ public:
     }
 
     // Querying
-    
+
     constexpr explicit operator bool() const noexcept { return has_val_; }
     constexpr bool has_value() const noexcept { return has_val_; }
 
     // Visitors
-    
+
     constexpr const T* operator->() const noexcept {
         return std::addressof(val_);
     }
@@ -871,29 +867,45 @@ public:
     }
 
 #ifdef BST_EXPECTED_MONADIC_INTERFACE
-    template <class F> constexpr auto and_then(F&& f) &;
-    template <class F> constexpr auto and_then(F&& f) &&;
-    template <class F> constexpr auto and_then(F&& f) const&;
-    template <class F> constexpr auto and_then(F&& f) const&&;
+    template <class F>
+    constexpr auto and_then(F&& f) &;
+    template <class F>
+    constexpr auto and_then(F&& f) &&;
+    template <class F>
+    constexpr auto and_then(F&& f) const&;
+    template <class F>
+    constexpr auto and_then(F&& f) const&&;
 
-    template <class F> constexpr auto or_else(F&& f) &;
-    template <class F> constexpr auto or_else(F&& f) &&;
-    template <class F> constexpr auto or_else(F&& f) const&;
-    template <class F> constexpr auto or_else(F&& f) const&&;
+    template <class F>
+    constexpr auto or_else(F&& f) &;
+    template <class F>
+    constexpr auto or_else(F&& f) &&;
+    template <class F>
+    constexpr auto or_else(F&& f) const&;
+    template <class F>
+    constexpr auto or_else(F&& f) const&&;
 
-    template <class F> constexpr auto transform(F&& f) &;
-    template <class F> constexpr auto transform(F&& f) &&;
-    template <class F> constexpr auto transform(F&& f) const&;
-    template <class F> constexpr auto transform(F&& f) const&&;
+    template <class F>
+    constexpr auto transform(F&& f) &;
+    template <class F>
+    constexpr auto transform(F&& f) &&;
+    template <class F>
+    constexpr auto transform(F&& f) const&;
+    template <class F>
+    constexpr auto transform(F&& f) const&&;
 
-    template <class F> constexpr auto transform_or(F&& f) &;
-    template <class F> constexpr auto transform_or(F&& f) &&;
-    template <class F> constexpr auto transform_or(F&& f) const&;
-    template <class F> constexpr auto transform_or(F&& f) const&&;
+    template <class F>
+    constexpr auto transform_or(F&& f) &;
+    template <class F>
+    constexpr auto transform_or(F&& f) &&;
+    template <class F>
+    constexpr auto transform_or(F&& f) const&;
+    template <class F>
+    constexpr auto transform_or(F&& f) const&&;
 #endif
-    
+
     // Equality Comparrison
-    
+
     template <class T2, class E2>
         requires(!std::is_void_v<T2>)
     friend constexpr bool operator==(const expected& x,
@@ -925,6 +937,7 @@ public:
 
 private:
     union {
+	struct {} invalid_;
         T val_;
         E unex_;
     };
@@ -954,7 +967,7 @@ private:
     }
 };
 
-//------------------------------------------------------------------------------
+
 
 //
 // class expected<void, E>
@@ -1223,6 +1236,6 @@ private:
 
 } // namespace bst
 
-//------------------------------------------------------------------------------
+
 
 #endif
