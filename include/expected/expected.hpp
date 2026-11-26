@@ -627,7 +627,7 @@ public:
 
     constexpr expected& operator=(const expected&)
         requires(!std::conjunction_v<
-                    std::is_copy_assignable_v<T>, std::is_copy_constructible<T>,
+                    std::is_copy_assignable<T>, std::is_copy_constructible<T>,
                     std::is_copy_assignable<E>, std::is_copy_constructible<E>,
                     std::disjunction<std::is_nothrow_move_constructible<E>,
                                      std::is_nothrow_move_constructible<T>>>)
